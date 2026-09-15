@@ -1,0 +1,9 @@
+replicaCount: 1
+image:
+  tag: "latest"
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+autoscaling:
+  enabled: false

@@ -1,0 +1,38 @@
+name: Helm Chart CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint chart
+        run: helm lint charts/ml-api
+
+      - name: Validate templates for all environments
+        run: |
+          helm template test charts/ml-api -f charts/ml-api/values-dev.yaml
+          helm template test charts/ml-api -f charts/ml-api/values-staging.yaml
+          helm template test charts/ml-api -f charts/ml-api/values-prod.yaml
+
+  package:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Package Helm chart
+        run: helm package charts/ml-api --destination .
