@@ -24,7 +24,7 @@ jobs:
           helm template test charts/ml-api -f charts/ml-api/values-staging.yaml
           helm template test charts/ml-api -f charts/ml-api/values-prod.yaml
 
-  package:
+  package-and-publish:
     needs: lint-and-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
@@ -35,4 +35,26 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Package Helm chart
-        run: helm package charts/ml-api --destination .
+        run: |
+          helm package charts/ml-api --destination .
+          ls -la *.tgz
+
+      # ============================================
+      # MOCKED / PSEUDO PUBLISH STEP
+      # ============================================
+      # In a real production setup, we would push the chart to a private OCI registry
+      # Example (real command would look like this):
+      #
+      #   echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+      #   helm push ml-api-0.1.0.tgz oci://ghcr.io/${{ github.repository_owner }}/helm-charts
+      #
+      # For this assignment, we simulate the publish step by uploading the packaged chart
+      # as a workflow artifact (as if publishing to a private registry).
+      # ============================================
+
+      - name: Upload chart as artifact (simulating publish to private OCI registry)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-api-helm-chart
+          path: "*.tgz"
+          retention-days: 7
